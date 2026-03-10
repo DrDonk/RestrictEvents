@@ -1,5 +1,10 @@
 RestrictEvents Changelog
 ========================
+
+### Fork Changes (DrDonk)
+
+### Original Changes (Acidanthera)
+
 #### v1.1.6
 - Added constants for macOS 26 support
 
