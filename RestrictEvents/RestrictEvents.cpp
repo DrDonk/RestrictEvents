@@ -50,6 +50,8 @@ static bool enableDiskArbitrationPatching;
 static bool enableAssetPatching;
 static bool enableSbvmmPatching;
 static bool enableF16cPatching;
+static bool enableVmmOffPatching;
+static bool enableVmmOnPatching;
 
 static bool verboseProcessLogging;
 static mach_vm_address_t orgCsValidateFunc;
@@ -380,6 +382,12 @@ struct RestrictEventsPolicy {
 			enablePciUiPatching = info->firmwareVendor != DeviceInfo::FirmwareVendor::Apple;
 			enableCpuNamePatching = true;
 		}
+		if (strstr(value, "vmmoff", strlen("vmmoff"))) {
+			enableVmmOffPatching = true;
+		}
+		if (strstr(value, "vmmon", strlen("vmmon"))) {
+			enableVmmOnPatching = true;
+		}
 
 		DBGLOG("rev", "revpatch to enable %s", duip);
 	}
@@ -511,7 +519,9 @@ PluginConfiguration ADDPR(config) {
 		restrictEventsPolicy.policy.registerPolicy();
 		revassetIsSet = enableAssetPatching;
 		revsbvmmIsSet = enableSbvmmPatching;
-
+		revvmmoffIsSet = enableVmmOffPatching;
+		revvmmonIsSet = enableVmmOnPatching;
+		
 		if ((lilu.getRunMode() & LiluAPI::RunningNormal) != 0 || (lilu.getRunMode() & LiluAPI::AllowInstallerRecovery) != 0) {
 			if (enableMemoryUiPatching | enablePciUiPatching) {
 				// Rename existing values to invalid ones to avoid matching.
@@ -566,7 +576,7 @@ PluginConfiguration ADDPR(config) {
 					// Perform regardless of Normal vs Installer
 					if ((getKernelVersion() >= KernelVersion::Monterey ||
 						(getKernelVersion() == KernelVersion::BigSur && getKernelMinorVersion() >= 4)) &&
-						(revsbvmmIsSet || revassetIsSet))
+						(revsbvmmIsSet || revassetIsSet || revvmmoffIsSet || revvmmonIsSet))
 						rerouteHvVmm(patcher);
 					if ((enableF16cPatching) &&
 						(getKernelVersion() > KernelVersion::Ventura ||

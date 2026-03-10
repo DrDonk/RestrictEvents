@@ -49,6 +49,8 @@
 
 bool revassetIsSet;
 bool revsbvmmIsSet;
+bool revvmmoffIsSet;
+bool revvmmonIsSet;
 
 static struct sysctl_oid_iterator sysctl_oid_iterator_begin(struct sysctl_oid_list *l) {
 	struct sysctl_oid_iterator it = { };
@@ -158,13 +160,26 @@ static int my_sysctl_vmm_present(__unused struct sysctl_oid *oidp, __unused void
 		 strcmp(procname, "osinstallersetup") == 0    // Primarily for 'Install macOS.app'
 		)
 	)) {
+		DBGLOG("revpatch", "sbvmm running");
 		int hv_vmm_present_on = 1;
 		return SYSCTL_OUT(req, &hv_vmm_present_on, sizeof(hv_vmm_present_on));
 	} else if (revassetIsSet && (strncmp(procname, "AssetCache",  sizeof("AssetCache")-1) == 0)) {
+		DBGLOG("revpatch", "asset running");
 		int hv_vmm_present_off = 0;
 		return SYSCTL_OUT(req, &hv_vmm_present_off, sizeof(hv_vmm_present_off));
 	}
 
+	if (revvmmoffIsSet) {
+		DBGLOG("revpatch", "vmmoff running");
+		int hv_vmm_present_off = 0;
+		return SYSCTL_OUT(req, &hv_vmm_present_off, sizeof(hv_vmm_present_off));
+	} else if (revvmmonIsSet) {
+		DBGLOG("revpatch", "vmmon running");
+		int hv_vmm_present_off = 1;
+		return SYSCTL_OUT(req, &hv_vmm_present_off, sizeof(hv_vmm_present_off));
+	}
+
+	DBGLOG("revpatch", "default running");
 	return FunctionCast(my_sysctl_vmm_present, org_sysctl_vmm_present)(oidp, arg1, arg2, req);
 }
 
