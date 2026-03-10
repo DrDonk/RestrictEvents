@@ -3,13 +3,12 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 46;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		CE39539C244ECDD900DEFAEA /* plugin_start.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE405ED81E4A080700AA0B3D /* plugin_start.cpp */; };
 		CE7B69382704BDE600BC8A8A /* SoftwareUpdate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE7B69372704BDE600BC8A8A /* SoftwareUpdate.cpp */; };
-		CE8DA0CC2517DE74008C44E8 /* libkmod.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CE8DA0CB2517DE74008C44E8 /* libkmod.a */; };
 		CEAAA50C21FC976100683764 /* RestrictEvents.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CEAAA50921FC976100683764 /* RestrictEvents.cpp */; };
 /* End PBXBuildFile section */
 
@@ -46,7 +45,6 @@
 		CE405EDA1E4A080F00AA0B3D /* plugin_start.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = plugin_start.hpp; sourceTree = "<group>"; };
 		CE6717F0278CC4DD00EB1CA1 /* SoftwareUpdate.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = SoftwareUpdate.hpp; sourceTree = "<group>"; };
 		CE7B69372704BDE600BC8A8A /* SoftwareUpdate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SoftwareUpdate.cpp; sourceTree = "<group>"; };
-		CE8DA0CB2517DE74008C44E8 /* libkmod.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libkmod.a; path = ../Lilu/MacKernelSDK/Library/x86_64/libkmod.a; sourceTree = "<group>"; };
 		CEAAA50821FC976100683764 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CEAAA50921FC976100683764 /* RestrictEvents.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RestrictEvents.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -56,7 +54,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CE8DA0CC2517DE74008C44E8 /* libkmod.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -134,7 +131,6 @@
 		CE8DA0CA2517DE74008C44E8 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				CE8DA0CB2517DE74008C44E8 /* libkmod.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -190,7 +186,8 @@
 		1C748C1E1C21952C0024EED2 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1300;
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2620;
 				ORGANIZATIONNAME = vit9696;
 				TargetAttributes = {
 					1C748C261C21952C0024EED2 = {
@@ -229,6 +226,7 @@
 /* Begin PBXShellScriptBuildPhase section */
 		F6AC609B2052C75D00376609 /* Archive */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -304,6 +302,7 @@
 				KERNEL_FRAMEWORK_HEADERS = "$(PROJECT_DIR)/MacKernelSDK/Headers";
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 			};
 			name = Debug;
 		};
@@ -350,6 +349,7 @@
 				KERNEL_EXTENSION_HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/MacKernelSDK/Headers";
 				KERNEL_FRAMEWORK_HEADERS = "$(PROJECT_DIR)/MacKernelSDK/Headers";
 				SDKROOT = macosx;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 			};
 			name = Release;
 		};
@@ -374,7 +374,7 @@
 					"$(inherited)",
 					"$(PROJECT_DIR)/MacKernelSDK/Library/x86_64",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MACOSX_DEPLOYMENT_TARGET = 11.5;
 				MARKETING_VERSION = "$(MODULE_VERSION)";
 				MODULE_NAME = as.vit9696.RestrictEvents;
 				MODULE_START = "$(PRODUCT_NAME)_kern_start";
@@ -423,7 +423,7 @@
 					"$(PROJECT_DIR)/MacKernelSDK/Library/x86_64",
 				);
 				LLVM_LTO = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.8;
+				MACOSX_DEPLOYMENT_TARGET = 11.5;
 				MARKETING_VERSION = "$(MODULE_VERSION)";
 				MODULE_NAME = as.vit9696.RestrictEvents;
 				MODULE_START = "$(PRODUCT_NAME)_kern_start";
