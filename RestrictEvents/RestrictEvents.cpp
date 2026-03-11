@@ -50,8 +50,7 @@ static bool enableDiskArbitrationPatching;
 static bool enableAssetPatching;
 static bool enableSbvmmPatching;
 static bool enableF16cPatching;
-static bool enableVmmOffPatching;
-static bool enableVmmOnPatching;
+static bool enableHVmmPatching;
 
 static bool verboseProcessLogging;
 static mach_vm_address_t orgCsValidateFunc;
@@ -382,16 +381,34 @@ struct RestrictEventsPolicy {
 			enablePciUiPatching = info->firmwareVendor != DeviceInfo::FirmwareVendor::Apple;
 			enableCpuNamePatching = true;
 		}
-		if (strstr(value, "vmmoff", strlen("vmmoff"))) {
-			enableVmmOffPatching = true;
-		}
-		if (strstr(value, "vmmon", strlen("vmmon"))) {
-			enableVmmOnPatching = true;
-		}
 
 		DBGLOG("rev", "revpatch to enable %s", duip);
 	}
 
+	/**
+	 * Retrieve kern.hv_vmm_present setting
+	 */
+	static void processVMMPatch() {
+		char duip[128] { "none" };
+		if (PE_parse_boot_argn("revhvmm", duip, sizeof(duip))) {
+			DBGLOG("rev", "read revhvmm from boot-args");
+		} else if (readNvramVariable(NVRAM_PREFIX(LILU_VENDOR_GUID, "revhvmm"), u"revhvmm", &EfiRuntimeServices::LiluVendorGuid, duip, sizeof(duip))) {
+			DBGLOG("rev", "read revhvmm from NVRAM");
+		}
+
+		char *value = reinterpret_cast<char *>(&duip[0]);
+		value[sizeof(duip) - 1] = '\0';
+
+		if (strstr(value, "off", strlen("off"))) {
+			enableHVmmPatching = false;
+		}
+		if (strstr(value, "on", strlen("on"))) {
+			enableHVmmPatching = true;
+		}
+
+		DBGLOG("rev", "revhvmm to enable %s", duip);
+	}
+	
 	/**
 	 * Compute CPU brand string patch
 	 */
@@ -517,10 +534,10 @@ PluginConfiguration ADDPR(config) {
 		RestrictEventsPolicy::getBlockedProcesses(&di);
 		RestrictEventsPolicy::processEnableUIPatch(&di);
 		restrictEventsPolicy.policy.registerPolicy();
+		RestrictEventsPolicy::processVMMPatch();
 		revassetIsSet = enableAssetPatching;
 		revsbvmmIsSet = enableSbvmmPatching;
-		revvmmoffIsSet = enableVmmOffPatching;
-		revvmmonIsSet = enableVmmOnPatching;
+		revhvmmIsSet = enableHVmmPatching;
 		
 		if ((lilu.getRunMode() & LiluAPI::RunningNormal) != 0 || (lilu.getRunMode() & LiluAPI::AllowInstallerRecovery) != 0) {
 			if (enableMemoryUiPatching | enablePciUiPatching) {
@@ -576,7 +593,8 @@ PluginConfiguration ADDPR(config) {
 					// Perform regardless of Normal vs Installer
 					if ((getKernelVersion() >= KernelVersion::Monterey ||
 						(getKernelVersion() == KernelVersion::BigSur && getKernelMinorVersion() >= 4)) &&
-						(revsbvmmIsSet || revassetIsSet || revvmmoffIsSet || revvmmonIsSet))
+						(revsbvmmIsSet || revassetIsSet || revhvmmIsSet))
+						DBGLOG("rev", "rerouteHvVmm");
 						rerouteHvVmm(patcher);
 					if ((enableF16cPatching) &&
 						(getKernelVersion() > KernelVersion::Ventura ||

@@ -69,7 +69,6 @@ SLIST_HEAD(sysctl_oid_list, sysctl_oid);
 
 extern bool revassetIsSet;
 extern bool revsbvmmIsSet;
-extern bool revvmmoffIsSet;
-extern bool revvmmonIsSet;
+extern bool revhvmmIsSet;
 
 #endif /* SoftwareUpdate_h */
