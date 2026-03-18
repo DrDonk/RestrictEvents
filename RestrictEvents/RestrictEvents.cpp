@@ -383,6 +383,7 @@ struct RestrictEventsPolicy {
 		}
 
 		DBGLOG("rev", "revpatch to enable %s", duip);
+		
 	}
 
 	/**
@@ -390,6 +391,7 @@ struct RestrictEventsPolicy {
 	 */
 	static void processVMMPatch() {
 		char duip[128] { "none" };
+		DBGLOG("rev", "revhvmm processing");
 		if (PE_parse_boot_argn("revhvmm", duip, sizeof(duip))) {
 			DBGLOG("rev", "read revhvmm from boot-args");
 		} else if (readNvramVariable(NVRAM_PREFIX(LILU_VENDOR_GUID, "revhvmm"), u"revhvmm", &EfiRuntimeServices::LiluVendorGuid, duip, sizeof(duip))) {
@@ -537,7 +539,9 @@ PluginConfiguration ADDPR(config) {
 		RestrictEventsPolicy::getBlockedProcesses(&di);
 		RestrictEventsPolicy::processEnableUIPatch(&di);
 		restrictEventsPolicy.policy.registerPolicy();
+		DBGLOG("rev", "processVMMPatch started");
 		RestrictEventsPolicy::processVMMPatch();
+		DBGLOG("rev", "processVMMPatch finished");
 		revassetIsSet = enableAssetPatching;
 		revsbvmmIsSet = enableSbvmmPatching;
 		revhvmmVal = enableHVmmPatching;
