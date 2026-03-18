@@ -149,7 +149,7 @@ static mach_vm_address_t org_sysctl_vmm_present;
 static int my_sysctl_vmm_present(__unused struct sysctl_oid *oidp, __unused void *arg1, int arg2, struct sysctl_req *req) {
 	char procname[64];
 	proc_name(proc_pid(req->p), procname, sizeof(procname));
-	// SYSLOG("supd", "\n\n\n\nsoftwareupdated vmm_present %d - >>> %s <<<<\n\n\n\n", arg2, procname);
+	SYSLOG("supd", "\n\n\n\nsoftwareupdated vmm_present %d - >>> %s <<<<\n\n\n\n", arg2, procname);
 	if (revsbvmmIsSet && (
 		// Always return 1 in recovery/installers
 		(lilu.getRunMode() & LiluAPI::RunningInstallerRecovery) != 0 ||
