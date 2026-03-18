@@ -180,6 +180,7 @@ static int my_sysctl_vmm_present(__unused struct sysctl_oid *oidp, __unused void
 	}
 
 	DBGLOG("revpatch", "default running");
+	int hv_vmm_present_off = 0;
 	return FunctionCast(my_sysctl_vmm_present, org_sysctl_vmm_present)(oidp, arg1, arg2, req);
 }
 
