@@ -50,7 +50,7 @@ static bool enableDiskArbitrationPatching;
 static bool enableAssetPatching;
 static bool enableSbvmmPatching;
 static bool enableF16cPatching;
-static bool enableHVmmPatching;
+static uint8_t enableHVmmPatching;
 
 static bool verboseProcessLogging;
 static mach_vm_address_t orgCsValidateFunc;
@@ -398,12 +398,15 @@ struct RestrictEventsPolicy {
 
 		char *value = reinterpret_cast<char *>(&duip[0]);
 		value[sizeof(duip) - 1] = '\0';
-
+		
+		if (strstr(value, "none", strlen("none"))) {
+			enableHVmmPatching = 0;
+		}
 		if (strstr(value, "off", strlen("off"))) {
-			enableHVmmPatching = false;
+			enableHVmmPatching = 1;
 		}
 		if (strstr(value, "on", strlen("on"))) {
-			enableHVmmPatching = true;
+			enableHVmmPatching = 2;
 		}
 
 		DBGLOG("rev", "revhvmm to enable %s", duip);
@@ -537,7 +540,7 @@ PluginConfiguration ADDPR(config) {
 		RestrictEventsPolicy::processVMMPatch();
 		revassetIsSet = enableAssetPatching;
 		revsbvmmIsSet = enableSbvmmPatching;
-		revhvmmIsSet = enableHVmmPatching;
+		revhvmmVal = enableHVmmPatching;
 		
 		if ((lilu.getRunMode() & LiluAPI::RunningNormal) != 0 || (lilu.getRunMode() & LiluAPI::AllowInstallerRecovery) != 0) {
 			if (enableMemoryUiPatching | enablePciUiPatching) {
@@ -593,7 +596,7 @@ PluginConfiguration ADDPR(config) {
 					// Perform regardless of Normal vs Installer
 					if ((getKernelVersion() >= KernelVersion::Monterey ||
 						(getKernelVersion() == KernelVersion::BigSur && getKernelMinorVersion() >= 4)) &&
-						(revsbvmmIsSet || revassetIsSet || revhvmmIsSet))
+						(revsbvmmIsSet || revassetIsSet || revhvmmVal))
 						DBGLOG("rev", "rerouteHvVmm");
 						rerouteHvVmm(patcher);
 					if ((enableF16cPatching) &&
