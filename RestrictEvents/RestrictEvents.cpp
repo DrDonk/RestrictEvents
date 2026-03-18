@@ -536,12 +536,10 @@ PluginConfiguration ADDPR(config) {
 		DBGLOG("rev", "restriction policy plugin loaded");
 		verboseProcessLogging = checkKernelArgument("-revproc");
 		auto di = BaseDeviceInfo::get();
+		RestrictEventsPolicy::processVMMPatch;
 		RestrictEventsPolicy::getBlockedProcesses(&di);
 		RestrictEventsPolicy::processEnableUIPatch(&di);
 		restrictEventsPolicy.policy.registerPolicy();
-		DBGLOG("rev", "processVMMPatch started");
-		RestrictEventsPolicy::processVMMPatch();
-		DBGLOG("rev", "processVMMPatch finished");
 		revassetIsSet = enableAssetPatching;
 		revsbvmmIsSet = enableSbvmmPatching;
 		revhvmmVal = enableHVmmPatching;
