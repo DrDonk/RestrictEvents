@@ -168,18 +168,13 @@ static int my_sysctl_vmm_present(__unused struct sysctl_oid *oidp, __unused void
 		return SYSCTL_OUT(req, &hv_vmm_present_off, sizeof(hv_vmm_present_off));
 	}
 
-	if (revhvmmVal == 1) {
-		DBGLOG("revhvmm", "vmm off");
+	if (revhvmmIsSet) {
+		DBGLOG("revpatch", "vmm off");
 		int hv_vmm_present_off = 0;
 		return SYSCTL_OUT(req, &hv_vmm_present_off, sizeof(hv_vmm_present_off));
 	}
-    if (revhvmmVal == 2) {
-		DBGLOG("revhvmm", "vmm on");
-		int hv_vmm_present_on = 1;
-		return SYSCTL_OUT(req, &hv_vmm_present_on, sizeof(hv_vmm_present_on));
-	}
     
-	DBGLOG("revhvmm", "default value");
+	DBGLOG("revpatch", "default vmm value");
 	return FunctionCast(my_sysctl_vmm_present, org_sysctl_vmm_present)(oidp, arg1, arg2, req);
 }
 

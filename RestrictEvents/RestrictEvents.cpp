@@ -50,7 +50,7 @@ static bool enableDiskArbitrationPatching;
 static bool enableAssetPatching;
 static bool enableSbvmmPatching;
 static bool enableF16cPatching;
-static uint8_t enableHVmmPatching;
+static bool enableHVmmPatching;
 
 static bool verboseProcessLogging;
 static mach_vm_address_t orgCsValidateFunc;
@@ -343,7 +343,7 @@ struct RestrictEventsPolicy {
 	 * Retrieve which system UI is to be enabled
 	 */
 	static void processEnableUIPatch(BaseDeviceInfo *info) {
-		char duip[128] { "auto" };
+		char duip[128] { "none" };
 		if (PE_parse_boot_argn("revpatch", duip, sizeof(duip))) {
 			DBGLOG("rev", "read revpatch from boot-args");
 		} else if (readNvramVariable(NVRAM_PREFIX(LILU_VENDOR_GUID, "revpatch"), u"revpatch", &EfiRuntimeServices::LiluVendorGuid, duip, sizeof(duip))) {
@@ -371,6 +371,9 @@ struct RestrictEventsPolicy {
 		if (strstr(value, "sbvmm", strlen("sbvmm"))) {
 			enableSbvmmPatching = true;
 		}
+		if (strstr(value, "vmmhide", strlen("vmmhide"))) {
+			enableHVmmPatching = true;
+		}
 		if (strstr(value, "f16c", strlen("f16c"))) {
 			enableF16cPatching = true;
 		}
@@ -386,34 +389,6 @@ struct RestrictEventsPolicy {
 		
 	}
 
-	/**
-	 * Retrieve kern.hv_vmm_present setting
-	 */
-	static void processVMMPatch() {
-		char duip[128] { "none" };
-		DBGLOG("rev", "revhvmm processing");
-		if (PE_parse_boot_argn("revhvmm", duip, sizeof(duip))) {
-			DBGLOG("rev", "read revhvmm from boot-args");
-		} else if (readNvramVariable(NVRAM_PREFIX(LILU_VENDOR_GUID, "revhvmm"), u"revhvmm", &EfiRuntimeServices::LiluVendorGuid, duip, sizeof(duip))) {
-			DBGLOG("rev", "read revhvmm from NVRAM");
-		}
-
-		char *value = reinterpret_cast<char *>(&duip[0]);
-		value[sizeof(duip) - 1] = '\0';
-		
-		if (strstr(value, "none", strlen("none"))) {
-			enableHVmmPatching = 0;
-		}
-		if (strstr(value, "off", strlen("off"))) {
-			enableHVmmPatching = 1;
-		}
-		if (strstr(value, "on", strlen("on"))) {
-			enableHVmmPatching = 2;
-		}
-
-		DBGLOG("rev", "revhvmm to enable %s", duip);
-	}
-	
 	/**
 	 * Compute CPU brand string patch
 	 */
@@ -536,13 +511,12 @@ PluginConfiguration ADDPR(config) {
 		DBGLOG("rev", "restriction policy plugin loaded");
 		verboseProcessLogging = checkKernelArgument("-revproc");
 		auto di = BaseDeviceInfo::get();
-		RestrictEventsPolicy::processVMMPatch;
 		RestrictEventsPolicy::getBlockedProcesses(&di);
 		RestrictEventsPolicy::processEnableUIPatch(&di);
 		restrictEventsPolicy.policy.registerPolicy();
 		revassetIsSet = enableAssetPatching;
 		revsbvmmIsSet = enableSbvmmPatching;
-		revhvmmVal = enableHVmmPatching;
+		revhvmmIsSet = enableHVmmPatching;
 		
 		if ((lilu.getRunMode() & LiluAPI::RunningNormal) != 0 || (lilu.getRunMode() & LiluAPI::AllowInstallerRecovery) != 0) {
 			if (enableMemoryUiPatching | enablePciUiPatching) {
@@ -598,7 +572,7 @@ PluginConfiguration ADDPR(config) {
 					// Perform regardless of Normal vs Installer
 					if ((getKernelVersion() >= KernelVersion::Monterey ||
 						(getKernelVersion() == KernelVersion::BigSur && getKernelMinorVersion() >= 4)) &&
-						(revsbvmmIsSet || revassetIsSet || revhvmmVal))
+						(revsbvmmIsSet || revassetIsSet || revhvmmIsSet))
 						DBGLOG("rev", "rerouteHvVmm");
 						rerouteHvVmm(patcher);
 					if ((enableF16cPatching) &&
