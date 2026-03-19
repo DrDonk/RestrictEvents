@@ -509,6 +509,8 @@ PluginConfiguration ADDPR(config) {
 	KernelVersion::Tahoe,
 	[]() {
 		DBGLOG("rev", "restriction policy plugin loaded");
+		DBGLOG("rev", "runmode %u", lilu.getRunMode());
+		DBGLOG("rev", "kernelversion %u", getKernelVersion());
 		verboseProcessLogging = checkKernelArgument("-revproc");
 		auto di = BaseDeviceInfo::get();
 		RestrictEventsPolicy::getBlockedProcesses(&di);
