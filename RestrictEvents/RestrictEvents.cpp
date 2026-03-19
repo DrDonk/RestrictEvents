@@ -574,15 +574,17 @@ PluginConfiguration ADDPR(config) {
 					DBGLOG("rev", "Dave 2");
 					if ((getKernelVersion() >= KernelVersion::Monterey ||
 						(getKernelVersion() == KernelVersion::BigSur && getKernelMinorVersion() >= 4)) &&
-						(revsbvmmIsSet || revassetIsSet || revhvmmIsSet))
+						(revsbvmmIsSet || revassetIsSet || revhvmmIsSet)) {
 						DBGLOG("rev", "rerouteHvVmm");
 						rerouteHvVmm(patcher);
+					}
 					if ((enableF16cPatching) &&
 						(getKernelVersion() > KernelVersion::Ventura ||
-						(getKernelVersion() == KernelVersion::Ventura && getKernelMinorVersion() >= 4)))
-					    DBGLOG("rev", "reroutef16c");
+						 (getKernelVersion() == KernelVersion::Ventura && getKernelMinorVersion() >= 4))) {
+						DBGLOG("rev", "reroutef16c");
 						reroutef16c(patcher);
-					DBGLOG("rev", "Dave 2");
+					}
+					DBGLOG("rev", "Dave 3");
 				});
 			}
 		}
