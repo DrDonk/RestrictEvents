@@ -551,6 +551,7 @@ PluginConfiguration ADDPR(config) {
 			if (modelFindPatch != nullptr || needsCpuNamePatch || enableDiskArbitrationPatching ||
 				(getKernelVersion() >= KernelVersion::Monterey ||
 				(getKernelVersion() == KernelVersion::BigSur && getKernelMinorVersion() >= 4))) {
+				DBGLOG("rev", "Dave 1")
 				lilu.onPatcherLoadForce([](void *user, KernelPatcher &patcher) {
 					if ((lilu.getRunMode() & LiluAPI::RunningNormal) != 0) {
 						if (needsCpuNamePatch) RestrictEventsPolicy::calculatePatchedBrandString();
@@ -570,6 +571,7 @@ PluginConfiguration ADDPR(config) {
 							SYSLOG("rev", "failed to route cs validation pages");
 					}
 					// Perform regardless of Normal vs Installer
+					DBGLOG("rev", "Dave 2")
 					if ((getKernelVersion() >= KernelVersion::Monterey ||
 						(getKernelVersion() == KernelVersion::BigSur && getKernelMinorVersion() >= 4)) &&
 						(revsbvmmIsSet || revassetIsSet || revhvmmIsSet))
@@ -578,7 +580,9 @@ PluginConfiguration ADDPR(config) {
 					if ((enableF16cPatching) &&
 						(getKernelVersion() > KernelVersion::Ventura ||
 						(getKernelVersion() == KernelVersion::Ventura && getKernelMinorVersion() >= 4)))
+					    DBGLOG("rev", "reroutef16c");
 						reroutef16c(patcher);
+					DBGLOG("rev", "Dave 2")
 				});
 			}
 		}
