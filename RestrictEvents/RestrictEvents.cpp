@@ -3,7 +3,7 @@
 //  RestrictEvents
 //
 //  Copyright © 2020 vit9696. All rights reserved.
-//
+//  novmm mods 2026 David Parsons
 
 #include <IOKit/IOService.h>
 #include <Headers/kern_api.hpp>
@@ -50,8 +50,7 @@ static bool enableDiskArbitrationPatching;
 static bool enableAssetPatching;
 static bool enableSbvmmPatching;
 static bool enableF16cPatching;
-static bool enableHVmmPatching;
-
+static bool enableNovmmPatching;
 static bool verboseProcessLogging;
 static mach_vm_address_t orgCsValidateFunc;
 
@@ -343,7 +342,7 @@ struct RestrictEventsPolicy {
 	 * Retrieve which system UI is to be enabled
 	 */
 	static void processEnableUIPatch(BaseDeviceInfo *info) {
-		char duip[128] { "none" };
+		char duip[128] { "auto" };
 		if (PE_parse_boot_argn("revpatch", duip, sizeof(duip))) {
 			DBGLOG("rev", "read revpatch from boot-args");
 		} else if (readNvramVariable(NVRAM_PREFIX(LILU_VENDOR_GUID, "revpatch"), u"revpatch", &EfiRuntimeServices::LiluVendorGuid, duip, sizeof(duip))) {
@@ -371,11 +370,11 @@ struct RestrictEventsPolicy {
 		if (strstr(value, "sbvmm", strlen("sbvmm"))) {
 			enableSbvmmPatching = true;
 		}
-		if (strstr(value, "vmmhide", strlen("vmmhide"))) {
-			enableHVmmPatching = true;
-		}
 		if (strstr(value, "f16c", strlen("f16c"))) {
 			enableF16cPatching = true;
+		}
+		if (strstr(value, "novmm", strlen("novmm"))) {
+			enableNovmmPatching = true;
 		}
 		if (strstr(value, "auto", strlen("auto"))) {
 			// Do not enable Memory and PCI UI patching on real Macs
@@ -386,7 +385,6 @@ struct RestrictEventsPolicy {
 		}
 
 		DBGLOG("rev", "revpatch to enable %s", duip);
-		
 	}
 
 	/**
@@ -508,9 +506,11 @@ PluginConfiguration ADDPR(config) {
 	KernelVersion::MountainLion,
 	KernelVersion::Tahoe,
 	[]() {
-		DBGLOG("rev", "restriction policy plugin loaded");
-		DBGLOG("rev", "runmode %u", lilu.getRunMode());
-		DBGLOG("rev", "kernelversion %u", getKernelVersion());
+		DBGLOG("rev", "RestrictEvents OC4VM Build");
+		DBGLOG("rev", "RestrictEvents policy plugin loaded");
+		DBGLOG("rev", "Lilu runmode: %u", lilu.getRunMode());
+		DBGLOG("rev", "Kernel version: %u.%u", getKernelVersion(), getKernelMinorVersion());
+		
 		verboseProcessLogging = checkKernelArgument("-revproc");
 		auto di = BaseDeviceInfo::get();
 		RestrictEventsPolicy::getBlockedProcesses(&di);
@@ -518,10 +518,12 @@ PluginConfiguration ADDPR(config) {
 		restrictEventsPolicy.policy.registerPolicy();
 		revassetIsSet = enableAssetPatching;
 		revsbvmmIsSet = enableSbvmmPatching;
-		revhvmmIsSet = enableHVmmPatching;
+		revnovmmIsSet = enableNovmmPatching;
 		
 		if ((lilu.getRunMode() & LiluAPI::RunningNormal) != 0 || (lilu.getRunMode() & LiluAPI::AllowInstallerRecovery) != 0) {
+			//DBGLOG("rev", "stage 1");
 			if (enableMemoryUiPatching | enablePciUiPatching) {
+				DBGLOG("rev", "check mem/pci patching");
 				// Rename existing values to invalid ones to avoid matching.
 				if (strcmp(di.modelIdentifier, "MacPro7,1") == 0) {
 					// on 13.0 MacPro7,1 string literal is inlined, but "MacPro7," will do the matching.
@@ -548,14 +550,17 @@ PluginConfiguration ADDPR(config) {
 					binPathSystemInformation = getKernelVersion() >= KernelVersion::Catalina ? binPathSystemInformationCatalina : binPathSystemInformationLegacy;
 				}
 			}
-
+			
+			//DBGLOG("rev", "stage 2");
 			needsCpuNamePatch = enableCpuNamePatching ? RestrictEventsPolicy::needsCpuNamePatch() : false;
 			if (modelFindPatch != nullptr || needsCpuNamePatch || enableDiskArbitrationPatching ||
 				(getKernelVersion() >= KernelVersion::Monterey ||
 				(getKernelVersion() == KernelVersion::BigSur && getKernelMinorVersion() >= 4))) {
-				DBGLOG("rev", "Dave 1");
+				//DBGLOG("rev", "stage 3");
 				lilu.onPatcherLoadForce([](void *user, KernelPatcher &patcher) {
+					//DBGLOG("rev", "stage 4");
 					if ((lilu.getRunMode() & LiluAPI::RunningNormal) != 0) {
+						DBGLOG("rev", "check cpubrand patching");
 						if (needsCpuNamePatch) RestrictEventsPolicy::calculatePatchedBrandString();
 						KernelPatcher::RouteRequest csRoute =
 						getKernelVersion() >= KernelVersion::BigSur ?
@@ -566,27 +571,26 @@ PluginConfiguration ADDPR(config) {
 						if (getKernelVersion() < KernelVersion::Sierra) {
 							vnodePagerOpsKernel = reinterpret_cast<void *>(patcher.solveSymbol(KernelPatcher::KernelID, "_vnode_pager_ops"));
 							if (!vnodePagerOpsKernel)
-								SYSLOG("rev", "failed to solve _vnode_pager_ops");
+								DBGLOG("rev", "failed to solve _vnode_pager_ops");
 						}
-						
+						DBGLOG("rev", "set cpubrand patching");
 						if (!patcher.routeMultipleLong(KernelPatcher::KernelID, &csRoute, 1))
-							SYSLOG("rev", "failed to route cs validation pages");
+							DBGLOG("rev", "failed to route cs validation pages");
 					}
 					// Perform regardless of Normal vs Installer
-					DBGLOG("rev", "Dave 2");
+					DBGLOG("rev", "check sbvmm/f16c patching");
 					if ((getKernelVersion() >= KernelVersion::Monterey ||
 						(getKernelVersion() == KernelVersion::BigSur && getKernelMinorVersion() >= 4)) &&
-						(revsbvmmIsSet || revassetIsSet || revhvmmIsSet)) {
-						DBGLOG("rev", "rerouteHvVmm");
+						(revsbvmmIsSet || revassetIsSet)){
+						DBGLOG("rev", "set sbvmm patching");
 						rerouteHvVmm(patcher);
 					}
 					if ((enableF16cPatching) &&
 						(getKernelVersion() > KernelVersion::Ventura ||
 						 (getKernelVersion() == KernelVersion::Ventura && getKernelMinorVersion() >= 4))) {
-						DBGLOG("rev", "reroutef16c");
+						DBGLOG("rev", "set f16c patching");
 						reroutef16c(patcher);
 					}
-					DBGLOG("rev", "Dave 3");
 				});
 			}
 		}

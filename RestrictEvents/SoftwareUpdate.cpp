@@ -3,7 +3,7 @@
 //  RestrictEvents
 //
 //  Copyright © 2021 vit9696. All rights reserved.
-//
+//  novmm mods 2026 David Parsons
 
 #include <Headers/plugin_start.hpp>
 #include <Headers/kern_api.hpp>
@@ -49,7 +49,7 @@
 
 bool revassetIsSet;
 bool revsbvmmIsSet;
-uint8_t revhvmmVal;
+bool revnovmmIsSet;
 
 static struct sysctl_oid_iterator sysctl_oid_iterator_begin(struct sysctl_oid_list *l) {
 	struct sysctl_oid_iterator it = { };
@@ -148,7 +148,8 @@ static mach_vm_address_t org_sysctl_vmm_present;
 static int my_sysctl_vmm_present(__unused struct sysctl_oid *oidp, __unused void *arg1, int arg2, struct sysctl_req *req) {
 	char procname[64];
 	proc_name(proc_pid(req->p), procname, sizeof(procname));
-	SYSLOG("supd", "\n\n\n\nsoftwareupdated vmm_present %d - >>> %s <<<<\n\n\n\n", arg2, procname);
+	DBGLOG("rev", "vmm override syscall");
+	//SYSLOG("supd", "\n\n\n\nsoftwareupdated vmm_present %d - >>> %s <<<<\n\n\n\n", arg2, procname);
 	if (revsbvmmIsSet && (
 		// Always return 1 in recovery/installers
 		(lilu.getRunMode() & LiluAPI::RunningInstallerRecovery) != 0 ||
@@ -159,22 +160,19 @@ static int my_sysctl_vmm_present(__unused struct sysctl_oid *oidp, __unused void
 		 strcmp(procname, "osinstallersetup") == 0    // Primarily for 'Install macOS.app'
 		)
 	)) {
-		DBGLOG("revpatch", "sbvmm running");
+		DBGLOG("rev", "sbvmm set vmm on");
 		int hv_vmm_present_on = 1;
 		return SYSCTL_OUT(req, &hv_vmm_present_on, sizeof(hv_vmm_present_on));
 	} else if (revassetIsSet && (strncmp(procname, "AssetCache",  sizeof("AssetCache")-1) == 0)) {
-		DBGLOG("revpatch", "asset running");
+		DBGLOG("rev", "asset set vmm off");
+		int hv_vmm_present_off = 0;
+		return SYSCTL_OUT(req, &hv_vmm_present_off, sizeof(hv_vmm_present_off));
+	} else if (revnovmmIsSet) {
+		DBGLOG("rev", "novmm set vmm off");
 		int hv_vmm_present_off = 0;
 		return SYSCTL_OUT(req, &hv_vmm_present_off, sizeof(hv_vmm_present_off));
 	}
-
-	if (revhvmmIsSet) {
-		DBGLOG("revpatch", "vmm off");
-		int hv_vmm_present_off = 0;
-		return SYSCTL_OUT(req, &hv_vmm_present_off, sizeof(hv_vmm_present_off));
-	}
-    
-	DBGLOG("revpatch", "default vmm value");
+	DBGLOG("rev", "vmm passthru syscall");
 	return FunctionCast(my_sysctl_vmm_present, org_sysctl_vmm_present)(oidp, arg1, arg2, req);
 }
 
@@ -183,6 +181,7 @@ static mach_vm_address_t org_sysctl_f16c;
 static int my_sysctl_f16c(__unused struct sysctl_oid *oidp, void *arg1, int arg2, struct sysctl_req *req) {
 	// Strip F16C bit from arg1
 	// Ref: https://github.com/apple-oss-distributions/xnu/blob/xnu-8020.101.4/bsd/kern/kern_mib.c#L935-L946
+	DBGLOG("rev", "f16c override syscall");
 	int mask = (int)((uint64_t)(uintptr_t)arg1 & ~(uint64_t)kHasF16C);
 
 	// Convert back
@@ -205,6 +204,8 @@ void rerouteHvVmm(KernelPatcher &patcher) {
 		return;
 	}
 	
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 	org_sysctl_vmm_present = patcher.routeFunction(reinterpret_cast<mach_vm_address_t>(vmm_present->oid_handler), reinterpret_cast<mach_vm_address_t>(my_sysctl_vmm_present), true);
 	if (!org_sysctl_vmm_present) {
 		SYSLOG("supd", "failed to route kern.hv_vmm_present sysctl");
@@ -212,6 +213,7 @@ void rerouteHvVmm(KernelPatcher &patcher) {
 		return;
 	}
 }
+#pragma clang diagnostic pop
 
 void reroutef16c(KernelPatcher &patcher) {
 	auto sysctl_children = reinterpret_cast<sysctl_oid_list *>(patcher.solveSymbol(KernelPatcher::KernelID, "_sysctl__children"));
@@ -227,8 +229,11 @@ void reroutef16c(KernelPatcher &patcher) {
 		return;
 	}
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 	org_sysctl_f16c = patcher.routeFunction(reinterpret_cast<mach_vm_address_t>(f16c->oid_handler), reinterpret_cast<mach_vm_address_t>(my_sysctl_f16c), true);
-
+#pragma clang diagnostic pop
+	
 	if (!org_sysctl_f16c) {
 		SYSLOG("supd", "failed to route hw.optional.f16c sysctl");
 		patcher.clearError();

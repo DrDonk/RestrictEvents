@@ -3,7 +3,7 @@
 //  RestrictEvents
 //
 //  Copyright © 2022 vit9696. All rights reserved.
-//
+//  novmm mods 2026 David Parsons
 
 #ifndef SoftwareUpdate_h
 #define SoftwareUpdate_h
@@ -69,6 +69,6 @@ SLIST_HEAD(sysctl_oid_list, sysctl_oid);
 
 extern bool revassetIsSet;
 extern bool revsbvmmIsSet;
-extern bool revhvmmIsSet;
+extern bool revnovmmIsSet;
 
 #endif /* SoftwareUpdate_h */
