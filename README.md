@@ -2,6 +2,22 @@ RestrictEvents
 ==============
 
 ## Fork
+[![Build Status](https://github.com/drdonk/RestrictEvents/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/drdonk/RestrictEvents/actions)
+
+This is a fork of the Acidanthera RestrictEvents Lilu plugin which adds support to change the default value of kern.hv_vmm_present.
+This is toggled using a new parameter to the revpatch boot arguement or NVRAM variable.
+
+- `revpatch=value` to enable patching as comma separated options. Default value is `auto`.
+  - `memtab` - enable memory tab in System Information on MacBookAir and MacBookPro10,x platforms
+  - `pci` - prevent PCI configuration warnings in System Settings on MacPro7,1 platforms
+  - `cpuname` - custom CPU name in System Information
+  - `diskread` - disables uninitialized disk warning in Finder
+  - `asset` - allows Content Caching when `sysctl kern.hv_vmm_present` returns `1` on macOS 11.3 or newer
+  - `sbvmm` - forces VMM SB model, allowing OTA updates for unsupported models on macOS 11.3 or newer
+  - `f16c` - resolve CoreGraphics crashing on Ivy Bridge CPUs by disabling f16c instruction set reporting in macOS 13.3 or newer
+  - `novmm` - force `sysctl kern.hv_vmm_present` returns `0` on macOS 11.3 or newer
+  - `none` - disable all patching
+  - `auto` - same as `memtab,pci,cpuname`, without `memtab` and `pci` patches being applied on real Macs
 
 ## Original
 

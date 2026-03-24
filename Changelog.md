@@ -2,6 +2,8 @@ RestrictEvents Changelog
 ========================
 
 ### Fork Changes (DrDonk)
+#### v1.1.7
+- Added novmm parameter to force VMM flag to 0
 
 ### Original Changes (Acidanthera)
 
