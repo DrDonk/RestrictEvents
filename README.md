@@ -15,7 +15,7 @@ This is toggled using a new parameter to the revpatch boot arguement or NVRAM va
   - `asset` - allows Content Caching when `sysctl kern.hv_vmm_present` returns `1` on macOS 11.3 or newer
   - `sbvmm` - forces VMM SB model, allowing OTA updates for unsupported models on macOS 11.3 or newer
   - `f16c` - resolve CoreGraphics crashing on Ivy Bridge CPUs by disabling f16c instruction set reporting in macOS 13.3 or newer
-  - `novmm` - force `sysctl kern.hv_vmm_present` returns `0` on macOS 11.3 or newer
+  - <i><b>`novmm` - force `sysctl kern.hv_vmm_present` returns `0` on macOS 11.3 or newer</i></b>
   - `none` - disable all patching
   - `auto` - same as `memtab,pci,cpuname`, without `memtab` and `pci` patches being applied on real Macs
 
